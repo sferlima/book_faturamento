@@ -1,45 +1,49 @@
-import subprocess
 import streamlit as st
 import pandas as pd
-from io import BytesIO
+import os
+from book_faturamento import consolidar_planilhas
 
 st.set_page_config(page_title="Consolidador de Planilhas", layout="centered")
-
 st.title("📊 Consolidador de Planilhas")
 
-#upload dos arquivos
-file1 = st.file_uploader("Upload da Planilha 1", type=["xlsx"])
-if file1: st.write(f"✅ Arquivo 1 enviado: **{file1.name}**")
+# Criar diretório upload/ caso não exista
+UPLOAD_DIR = "upload"
+os.makedirs(UPLOAD_DIR, exist_ok=True)
 
-file2 = st.file_uploader("Upload da Planilha 2", type=["xlsx"])
-if file2: st.write(f"✅ Arquivo 2 enviado: **{file2.name}**")
+# Upload
+file1 = st.file_uploader("Upload da Planilha: Dados Cadastrais", type=["xlsx"])
+file2 = st.file_uploader("Upload da Planilha: Férias", type=["xlsx"])
+file3 = st.file_uploader("Upload da Planilha: Demitidos", type=["xlsx"])
 
-file3 = st.file_uploader("Upload da Planilha 3", type=["xlsx"])
-if file3: st.write(f"✅ Arquivo 3 enviado: **{file3.name}**")
-
-
-#consolidação das planilhas com o book_faturamento.py
 if file1 and file2 and file3:
     if st.button("🔄 Consolidar planilhas"):
-        
-        df1 = pd.read_excel(file1)
-        df2 = pd.read_excel(file2)
-        df3 = pd.read_excel(file3)
+        try:
+            # Salvar arquivos no diretório upload/
+            path1 = os.path.join(UPLOAD_DIR, "dados_cadastrais.xlsx")
+            path2 = os.path.join(UPLOAD_DIR, "ferias.xlsx")
+            path3 = os.path.join(UPLOAD_DIR, "demitidos.xlsx")
 
-        subprocess.run(["python", "book_faturamento.py", file1, file2, file3])
-        df_final = pd.read_excel("consolidacao.xlsx")
-        
-        st.subheader("Pre-visualização")
-        st.dataframe(df_final.head(10))  
+            with open(path1, "wb") as f:
+                f.write(file1.getbuffer())
+            with open(path2, "wb") as f:
+                f.write(file2.getbuffer())
+            with open(path3, "wb") as f:
+                f.write(file3.getbuffer())
 
-        
-        output = BytesIO()
-        df_final.to_excel(output, index=False)
-        output.seek(0)
+            # Consolidar
+            output_path = os.path.join(UPLOAD_DIR, "consolidacao.xlsx")
+            df_final = consolidar_planilhas(path1, path2, path3, output_path)
 
-        st.download_button(
-            label="⬇️ Baixar planilha consolidada",
-            data=output,
-            file_name="consolidacao.xlsx",
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        )
+            # Mostrar resultado
+            st.success("✅ Consolidação concluída!")
+            st.dataframe(df_final)
+
+            # Botão para download
+            st.download_button(
+                label="⬇️ Baixar consolidação",
+                data=open(output_path, "rb").read(),
+                file_name="consolidacao.xlsx"
+            )
+
+        except Exception as e:
+            st.error(f"❌ Erro ao consolidar: {e}")
