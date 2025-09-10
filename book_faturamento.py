@@ -1,7 +1,7 @@
 import pandas as pd
-import re
 
 def consolidar_planilhas(arquivo1, arquivo2, arquivo3, arquivo_saida="consolidacao.xlsx"):
+    
     # Carregar as planilhas
     df_cadastrais = pd.read_excel(arquivo1)
     df_ferias = pd.read_excel(arquivo2)
@@ -9,23 +9,26 @@ def consolidar_planilhas(arquivo1, arquivo2, arquivo3, arquivo_saida="consolidac
 
     # Padronizar nomes para maiúsculas
     df_cadastrais['Nome'] = df_cadastrais['Nome'].str.upper()
-    df_ferias['nome'] = df_ferias['nome'].str.upper()
+    df_ferias['Profissional'] = df_ferias['Profissional'].str.upper()
     df_demitidos['Nome'] = df_demitidos['Nome'].str.upper()
 
-    # Renomear colunas
-    df_ferias = df_ferias.rename(columns={'nome': 'Nome'})
-    df_demitidos = df_demitidos.rename(columns={'Nome': 'Nome'})
-
     # Mesclar os dados
-    df_consolidado = df_cadastrais.merge(
-        df_ferias[['Nome', 'INICIO', 'FIM']],
-        on='Nome',
-        how='left'
-    ).merge(
-        df_demitidos[['Nome', 'Data de Situação']],
-        on='Nome',
-        how='left'
+    df_consolidado = (
+        df_cadastrais
+        .merge(
+            df_ferias[['Profissional', 'Primeiro dia', 'Ultimo dia']],
+            left_on='Nome', right_on='Profissional',
+            how='left'
+        )
+        .merge(
+            df_demitidos[['Nome', 'Data de Situação']],
+            on='Nome',
+            how='left'
+        )
     )
+
+    # Remover a coluna duplicada 'Profissional' se não precisar dela
+    df_consolidado = df_consolidado.drop(columns=['Profissional'])
 
     # Criar a estrutura da planilha final
     df_final = pd.DataFrame()
@@ -61,8 +64,8 @@ def consolidar_planilhas(arquivo1, arquivo2, arquivo3, arquivo_saida="consolidac
     df_final['SALDO DO FGTS (R$)'] = 'R$ '
 
     # Férias
-    df_final['FÉRIAS (início)'] = pd.to_datetime(df_consolidado['INICIO'], errors='coerce').dt.strftime('%d.%m.%Y')
-    df_final['FÉRIAS (fim)'] = pd.to_datetime(df_consolidado['FIM'], errors='coerce').dt.strftime('%d.%m.%Y')
+    df_final['FÉRIAS (início)'] = pd.to_datetime(df_consolidado['Primeiro dia'], errors='coerce').dt.strftime('%d.%m.%Y')
+    df_final['FÉRIAS (fim)'] = pd.to_datetime(df_consolidado['Ultimo dia'], errors='coerce').dt.strftime('%d.%m.%Y')
 
     df_final['FALTAS (quantidade)'] = ''
     df_final['HORAS EXTRAS (quantidade)'] = ''

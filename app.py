@@ -1,6 +1,7 @@
 import streamlit as st
-import pandas as pd
 import os
+import random
+import time
 from book_faturamento import consolidar_planilhas
 
 st.set_page_config(page_title="Consolidador de Planilhas", layout="centered")
@@ -39,11 +40,12 @@ if file1 and file2 and file3:
             st.dataframe(df_final)
 
             # Botão para download
-            st.download_button(
-                label="⬇️ Baixar consolidação",
-                data=open(output_path, "rb").read(),
-                file_name="consolidacao.xlsx"
-            )
+            with open(output_path, "rb") as f:
+                st.download_button(
+                    label="⬇️ Baixar consolidação",
+                    data=f.read(),
+                    file_name="consolidacao.xlsx"
+                )
 
         except Exception as e:
             st.error(f"❌ Erro ao consolidar: {e}")

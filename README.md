@@ -15,4 +15,7 @@ pip install -r requirements.txt
 # 4. Rodar o app.py 
 streamlit run app.py
 
+# 5. Disponibilizar em um DNS externo
+ngrok http 8501
+
 ```
