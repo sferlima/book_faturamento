@@ -1,20 +1,22 @@
 import pandas as pd
 
-def consolidar_planilhas(arquivo1, arquivo2, arquivo3, arquivo_saida="consolidacao.xlsx"):
+def consolidar_planilhas(arquivo1, arquivo2, arquivo3, arquivo4, arquivo_saida="consolidacao.xlsx"):
     
     # Carregar as planilhas
-    df_cadastrais = pd.read_excel(arquivo1)
+    df_dados_cadastrais = pd.read_excel(arquivo1)
     df_ferias = pd.read_excel(arquivo2)
     df_demitidos = pd.read_excel(arquivo3)
+    df_vale_transporte = pd.read_excel(arquivo4)
 
     # Padronizar nomes para maiúsculas
-    df_cadastrais['Nome'] = df_cadastrais['Nome'].str.upper()
+    df_dados_cadastrais['Nome'] = df_dados_cadastrais['Nome'].str.upper()
     df_ferias['Profissional'] = df_ferias['Profissional'].str.upper()
     df_demitidos['Nome'] = df_demitidos['Nome'].str.upper()
+    df_vale_transporte['Nome'] = df_vale_transporte['Nome'].str.upper()
 
     # Mesclar os dados
     df_consolidado = (
-        df_cadastrais
+        df_dados_cadastrais
         .merge(
             df_ferias[['Profissional', 'Primeiro dia', 'Ultimo dia']],
             left_on='Nome', right_on='Profissional',
@@ -25,10 +27,12 @@ def consolidar_planilhas(arquivo1, arquivo2, arquivo3, arquivo_saida="consolidac
             on='Nome',
             how='left'
         )
+        .merge(
+            df_vale_transporte[['Nome', 'Vl Beneficio']],
+            on='Nome',
+            how='left'
+        )
     )
-
-    # Remover a coluna duplicada 'Profissional' se não precisar dela
-    df_consolidado = df_consolidado.drop(columns=['Profissional'])
 
     # Criar a estrutura da planilha final
     df_final = pd.DataFrame()
@@ -58,7 +62,7 @@ def consolidar_planilhas(arquivo1, arquivo2, arquivo3, arquivo_saida="consolidac
 
     # Formatar valores monetários
     df_final['SALÁRIO (R$)'] = 'R$ ' + df_consolidado['Salário'].map('{:,.2f}'.format).str.replace('.', '#').str.replace(',', '.').str.replace('#', ',')
-    df_final['AUXÍLIO TRANSPORTE (R$)'] = 'R$ ' + df_consolidado['Valor de Auxílio (Tipo de Modalidade)'].map('{:,.2f}'.format).str.replace('.', '#').str.replace(',', '.').str.replace('#', ',')
+    df_final['AUXÍLIO TRANSPORTE (R$)'] = 'R$ ' + df_consolidado['Vl Beneficio'].fillna(0).map('{:,.2f}'.format).str.replace('.', '#').str.replace(',', '.').str.replace('#', ',')
     df_final['AUXÍLIO ALIMENTAÇÃO (R$)'] = 'R$ ' + df_consolidado['Remuneração Variável (Benefícios)'].map('{:,.2f}'.format).str.replace('.', '#').str.replace(',', '.').str.replace('#', ',')
 
     df_final['SALDO DO FGTS (R$)'] = 'R$ '

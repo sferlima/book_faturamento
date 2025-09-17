@@ -15,14 +15,16 @@ os.makedirs(UPLOAD_DIR, exist_ok=True)
 file1 = st.file_uploader("Upload da Planilha: Dados Cadastrais", type=["xlsx"])
 file2 = st.file_uploader("Upload da Planilha: Férias", type=["xlsx"])
 file3 = st.file_uploader("Upload da Planilha: Demitidos", type=["xlsx"])
+file4 = st.file_uploader("Upload da Planilha: Vale Transporte", type=["xlsx"])
 
-if file1 and file2 and file3:
+if file1 and file2 and file3 and file4:
     if st.button("🔄 Consolidar planilhas"):
         try:
             # Salvar arquivos no diretório upload/
             path1 = os.path.join(UPLOAD_DIR, "dados_cadastrais.xlsx")
             path2 = os.path.join(UPLOAD_DIR, "ferias.xlsx")
             path3 = os.path.join(UPLOAD_DIR, "demitidos.xlsx")
+            path4 = os.path.join(UPLOAD_DIR, "vale_transporte.xlsx")
 
             with open(path1, "wb") as f:
                 f.write(file1.getbuffer())
@@ -30,10 +32,12 @@ if file1 and file2 and file3:
                 f.write(file2.getbuffer())
             with open(path3, "wb") as f:
                 f.write(file3.getbuffer())
+            with open(path4, "wb") as f:
+                f.write(file4.getbuffer())
 
             # Consolidar
             output_path = os.path.join(UPLOAD_DIR, "consolidacao.xlsx")
-            df_final = consolidar_planilhas(path1, path2, path3, output_path)
+            df_final = consolidar_planilhas(path1, path2, path3, path4, output_path)
 
             # Mostrar resultado
             st.success("✅ Consolidação concluída!")
