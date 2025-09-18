@@ -19,3 +19,7 @@ streamlit run app.py
 ngrok http 8501
 
 ```
+
+```
+docker-compose up -d
+```
